@@ -1,41 +1,85 @@
+"""
+Main event handlers: /start, menu navigation, callback routing.
+"""
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
-from event_display import show_events, show_event_details
-from user_registration import request_contact
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Обработчик /start с меню"""
-    # Проверяем и запрашиваем контакт, если нужно
-    await request_contact(update, context)
-    # Меню будет показано только после обработки контакта
+import config
+from user_registration import request_contact, handle_contact
+from user_handler import get_user_data
 
-async def events_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Обработчик команды /events"""
+
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /start — check contact, then show menu."""
+    user_id = update.effective_user.id
+    has_data = await get_user_data(user_id)
+    if not has_data:
+        await request_contact(update, context)
+        return
+    await start_callback(update, context)
+
+
+async def events_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /events — show event list."""
+    from event_display import show_events
     await show_events(update, context)
 
-# Обработчик для возврата на главную по кнопке "Домой"
-async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Обработчик кнопки 'Домой'"""
+
+async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show the main menu after contact is confirmed."""
+    user_id = update.effective_user.id
+    first_name = update.effective_user.first_name or ""
+
+    keyboard = [
+        [InlineKeyboardButton("📅 Мероприятия", callback_data="show_events")],
+        [InlineKeyboardButton("📚 Программы", callback_data="show_programs")],
+        [InlineKeyboardButton("👤 Менеджер", callback_data="manager")],
+        [InlineKeyboardButton("❓ FAQ", callback_data="faq")],
+    ]
+
+    # Admin button if applicable
+    if user_id in config.ADMIN_IDS:
+        keyboard.append([InlineKeyboardButton("⚙️ Админ", callback_data="admin_menu")])
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    welcome = config.BOT_WELCOME_TEXT
+
     query = update.callback_query
     if query:
         await query.answer()
-        keyboard = [
-            [InlineKeyboardButton("Афиша мероприятий", callback_data='show_events')],
-            [InlineKeyboardButton("Регистрация", callback_data='start_register')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.edit_text('Привет! Это бот университета. Выберите действие:', reply_markup=reply_markup)
-    else:
-        keyboard = [
-            [InlineKeyboardButton("Афиша мероприятий", callback_data='show_events')],
-            [InlineKeyboardButton("Регистрация", callback_data='start_register')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text('Привет! Это бот университета. Выберите действие:', reply_markup=reply_markup)
+        await _safe_edit_or_reply(query.message, f"👋 Привет, {first_name}!\n\n{welcome}", reply_markup)
+    elif update.message:
+        await update.message.reply_text(f"👋 Привет, {first_name}!\n\n{welcome}", reply_markup=reply_markup)
 
-# Экспорт обработчиков
-start = CommandHandler("start", start)
-events_command = CommandHandler("events", events_command)
-show_events_handler = CallbackQueryHandler(show_events, pattern='^show_events$')
-show_event_details_handler = CallbackQueryHandler(show_event_details, pattern='^event_details_.*$')
-start_handler = CallbackQueryHandler(start_callback, pattern='^start$')
+
+# ── Handlers for main.py registration ────────────────────────────
+start_handler = CallbackQueryHandler(start_callback, pattern="^start$")
+manager_button_handler = CallbackQueryHandler(_manager_redirect, pattern="^manager$")
+faq_button_handler = CallbackQueryHandler(_faq_redirect, pattern="^faq$")
+
+
+async def _manager_redirect(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Redirect /manager button to support handler."""
+    from support import manager_handler
+    await manager_handler(update, context)
+
+
+async def _faq_redirect(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Redirect /faq button to support handler."""
+    from support import faq_handler
+    await faq_handler(update, context)
+
+
+async def _safe_edit_or_reply(message, text: str, reply_markup):
+    import telegram.error
+    try:
+        await message.edit_text(text, parse_mode="HTML", reply_markup=reply_markup)
+    except telegram.error.BadRequest as e:
+        err = str(e).lower()
+        if "not modified" not in err:
+            try:
+                await message.reply_text(text, parse_mode="HTML", reply_markup=reply_markup)
+            except Exception:
+                pass
+    except Exception:
+        pass

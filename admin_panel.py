@@ -48,17 +48,17 @@ def get_admin_handler():
 async def admin_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if not is_admin(user_id):
-        await update.message.reply_text("У вас нет прав администратора.")
+        await update.message.reply_text(config.MSG_ADMIN_NO_ACCESS)
         return
 
     keyboard = [
-        [InlineKeyboardButton("📊 Статистика", callback_data="admin_stats")],
-        [InlineKeyboardButton("📢 Рассылка", callback_data="admin_broadcast")],
-        [InlineKeyboardButton("⏰ Напоминания", callback_data="admin_reminder")],
-        [InlineKeyboardButton("❓ Управление FAQ", callback_data="admin_faq")],
+        [InlineKeyboardButton(config.BTN_ADMIN_STATS, callback_data="admin_stats")],
+        [InlineKeyboardButton(config.BTN_ADMIN_BROADCAST, callback_data="admin_broadcast")],
+        [InlineKeyboardButton(config.BTN_ADMIN_REMINDERS, callback_data="admin_reminder")],
+        [InlineKeyboardButton(config.BTN_ADMIN_FAQ, callback_data="admin_faq")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Панель администратора:", reply_markup=reply_markup)
+    await update.message.reply_text(config.MSG_ADMIN_TITLE, reply_markup=reply_markup)
 
 
 async def admin_stats_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -66,17 +66,17 @@ async def admin_stats_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.answer()
     events = await get_upcoming_events()
     upcoming_names = "\n".join(f"  • {e['name']} ({e['date']})" for e in events[:10])
-    text = f"📊 Статистика\n\nПредстоящие мероприятия:\n{upcoming_names or '  нет'}\n"
+    text = f"{config.BTN_ADMIN_STATS}\n\nПредстоящие мероприятия:\n{upcoming_names or '  нет'}\n"
     text += "\nЗарегистрированные пользователи: (см. Google Sheet или Excel)"
-    keyboard = [[InlineKeyboardButton("Назад", callback_data="admin_menu")]]
+    keyboard = [[InlineKeyboardButton(config.BTN_BACK, callback_data="admin_menu")]]
     await _safe_edit(query, text, InlineKeyboardMarkup(keyboard))
 
 
 async def admin_broadcast_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    text = "📢 Рассылка\n\nВведите текст для рассылки всем пользователям:"
-    keyboard = [[InlineKeyboardButton("Отмена", callback_data="admin_menu")]]
+    text = config.MSG_BROADCAST_PROMPT
+    keyboard = [[InlineKeyboardButton(config.BTN_CANCEL, callback_data="admin_menu")]]
     await _safe_edit(query, text, InlineKeyboardMarkup(keyboard))
     return BROADCAST
 
@@ -85,12 +85,12 @@ async def admin_broadcast_send(update: Update, context: ContextTypes.DEFAULT_TYP
     text = update.message.text
     context.user_data["broadcast_text"] = text
     keyboard = [
-        [InlineKeyboardButton("✅ Отправить", callback_data="admin_broadcast_confirm")],
-        [InlineKeyboardButton("❌ Отмена", callback_data="admin_menu")],
+        [InlineKeyboardButton(config.BTN_SEND_CONFIRM, callback_data="admin_broadcast_confirm")],
+        [InlineKeyboardButton(config.BTN_CANCEL, callback_data="admin_menu")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        f"Подтвердите рассылку:\n\n{text[:500]}", reply_markup=reply_markup
+        config.MSG_BROADCAST_CONFIRM.format(text=text[:500]), reply_markup=reply_markup
     )
     return ConversationHandler.END
 
@@ -99,10 +99,10 @@ async def admin_broadcast_confirm(update: Update, context: ContextTypes.DEFAULT_
     query = update.callback_query
     await query.answer()
     text = context.user_data.get("broadcast_text", "")
-    keyboard = [[InlineKeyboardButton("Назад", callback_data="admin_menu")]]
+    keyboard = [[InlineKeyboardButton(config.BTN_BACK, callback_data="admin_menu")]]
     # In a real app, iterate over all registered users and send_message.
     # For portfolio template we just acknowledge the action.
-    await _safe_edit(query, f"✅ Рассылка отправлена\n\n{text[:100]}", InlineKeyboardMarkup(keyboard))
+    await _safe_edit(query, config.MSG_BROADCAST_SENT.format(text=text[:100]), InlineKeyboardMarkup(keyboard))
     context.user_data.pop("broadcast_text", None)
 
 
@@ -111,11 +111,11 @@ async def admin_reminder_start(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.answer()
     events = await get_upcoming_events(days_ahead=30)
     if not events:
-        text = "Нет предстоящих мероприятий в ближайшие 30 дней."
+        text = config.MSG_NO_ADMIN_EVENTS
     else:
         lines = [f"  • {i}: {e['name']} ({e['date']})" for i, e in enumerate(events)]
-        text = f"⏰ Напоминания\nВыберите мероприятие:\n" + "\n".join(lines)
-    keyboard = [[InlineKeyboardButton("Назад", callback_data="admin_menu")]]
+        text = config.MSG_ADMIN_REMINDERS_TITLE + "\n" + "\n".join(lines)
+    keyboard = [[InlineKeyboardButton(config.BTN_BACK, callback_data="admin_menu")]]
     await _safe_edit(query, text, InlineKeyboardMarkup(keyboard))
 
 
@@ -123,35 +123,35 @@ async def admin_faq_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     keyboard = [
-        [InlineKeyboardButton("Просмотр", callback_data="admin_faq_view")],
-        [InlineKeyboardButton("Редактировать", callback_data="admin_faq_edit")],
-        [InlineKeyboardButton("Назад", callback_data="admin_menu")],
+        [InlineKeyboardButton(config.BTN_ADMIN_FAQ_VIEW, callback_data="admin_faq_view")],
+        [InlineKeyboardButton(config.BTN_ADMIN_FAQ_EDIT, callback_data="admin_faq_edit")],
+        [InlineKeyboardButton(config.BTN_BACK, callback_data="admin_menu")],
     ]
-    await _safe_edit(query, "❓ Управление FAQ", InlineKeyboardMarkup(keyboard))
+    await _safe_edit(query, config.MSG_FAQ_MANAGE_TITLE, InlineKeyboardMarkup(keyboard))
 
 
 async def admin_faq_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     text = load_faq()
-    keyboard = [[InlineKeyboardButton("Назад", callback_data="admin_faq")]]
+    keyboard = [[InlineKeyboardButton(config.BTN_BACK, callback_data="admin_faq")]]
     await _safe_edit(query, text[:4000], InlineKeyboardMarkup(keyboard))
 
 
 async def admin_faq_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    text = "Введите новый текст для FAQ:"
-    keyboard = [[InlineKeyboardButton("Отмена", callback_data="admin_faq")]]
+    text = config.MSG_FAQ_EDIT_PROMPT
+    keyboard = [[InlineKeyboardButton(config.BTN_CANCEL, callback_data="admin_faq")]]
     await _safe_edit(query, text, InlineKeyboardMarkup(keyboard))
     return FAQ_EDIT
 
 
 async def admin_faq_save(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_faq(update.message.text)
-    keyboard = [[InlineKeyboardButton("Назад", callback_data="admin_faq")]]
+    keyboard = [[InlineKeyboardButton(config.BTN_BACK, callback_data="admin_faq")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("FAQ обновлён!", reply_markup=reply_markup)
+    await update.message.reply_text(config.MSG_FAQ_SAVED, reply_markup=reply_markup)
     return ConversationHandler.END
 
 
@@ -160,12 +160,12 @@ async def admin_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     query = update.callback_query
     await query.answer()
     keyboard = [
-        [InlineKeyboardButton("📊 Статистика", callback_data="admin_stats")],
-        [InlineKeyboardButton("📢 Рассылка", callback_data="admin_broadcast")],
-        [InlineKeyboardButton("⏰ Напоминания", callback_data="admin_reminder")],
-        [InlineKeyboardButton("❓ Управление FAQ", callback_data="admin_faq")],
+        [InlineKeyboardButton(config.BTN_ADMIN_STATS, callback_data="admin_stats")],
+        [InlineKeyboardButton(config.BTN_ADMIN_BROADCAST, callback_data="admin_broadcast")],
+        [InlineKeyboardButton(config.BTN_ADMIN_REMINDERS, callback_data="admin_reminder")],
+        [InlineKeyboardButton(config.BTN_ADMIN_FAQ, callback_data="admin_faq")],
     ]
-    await _safe_edit(query, "Панель администратора:", InlineKeyboardMarkup(keyboard))
+    await _safe_edit(query, config.MSG_ADMIN_BACK_TEXT, InlineKeyboardMarkup(keyboard))
 
 
 # ── Conversation handlers ─────────────────────────────────────────

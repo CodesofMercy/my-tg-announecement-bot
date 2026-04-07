@@ -12,20 +12,20 @@ import config
 
 # ── FAQ ──────────────────────────────────────────────────────────
 FAQ_FILE_PATH = "faq.txt"
-FAQ_FALLBACK_TEXT = "FAQ временно в разработке, возвращайтесь чуточку позже."
+FAQ_FALLBACK_TEXT = config.FAQ_FALLBACK_TEXT  # from config
 
 
 def load_faq() -> str:
     """Load FAQ text from file, or return fallback."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), FAQ_FILE_PATH)
     if not os.path.exists(path):
-        return FAQ_FALLBACK_TEXT
+        return config.FAQ_FALLBACK_TEXT
     try:
         with open(path, "r", encoding="utf-8") as f:
             text = f.read().strip()
-        return text if text else FAQ_FALLBACK_TEXT
+        return text if text else config.FAQ_FALLBACK_TEXT
     except Exception:
-        return FAQ_FALLBACK_TEXT
+        return config.FAQ_FALLBACK_TEXT
 
 
 def save_faq(draft: str) -> None:
@@ -39,11 +39,11 @@ async def manager_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     """Command /manager — open a link to the manager."""
     mgr_user = config.MANAGER_USERNAME.lstrip("@")
     keyboard = [
-        [InlineKeyboardButton("Написать менеджеру", url=f"https://t.me/{mgr_user}")],
-        [InlineKeyboardButton("Домой", callback_data="start")],
+        [InlineKeyboardButton(config.BTN_WRITE_MANAGER, url=f"https://t.me/{mgr_user}")],
+        [InlineKeyboardButton(config.BTN_HOME, callback_data="start")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    text = f"Связаться с менеджером: @{mgr_user}"
+    text = config.MSG_MANAGER_CONTACT.format(manager=mgr_user)
     if update.message:
         await update.message.reply_text(text, reply_markup=reply_markup)
     elif update.callback_query:
@@ -55,7 +55,7 @@ async def manager_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def faq_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Command /faq — show the FAQ."""
     text = load_faq()
-    keyboard = [[InlineKeyboardButton("Домой", callback_data="start")]]
+    keyboard = [[InlineKeyboardButton(config.BTN_HOME, callback_data="start")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     if update.message:
         await update.message.reply_text(text, reply_markup=reply_markup)

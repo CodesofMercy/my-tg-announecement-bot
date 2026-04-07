@@ -62,10 +62,10 @@ async def register_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         "is_program": False,
                     })
                 else:
-                    await _safe_edit(query, "Ошибка: мероприятие не найдено.", None)
+                    await _safe_edit(query, config.MSG_REG_ERROR_EVENT, None)
                     return ConversationHandler.END
             except ValueError:
-                await _safe_edit(query, "Ошибка ID мероприятия.", None)
+                await _safe_edit(query, config.MSG_REG_ERROR_EVENT_ID, None)
                 return ConversationHandler.END
 
         # Program registration
@@ -81,15 +81,15 @@ async def register_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         "is_program": True,
                     })
                 else:
-                    await _safe_edit(query, "Ошибка: программа не найдена.", None)
+                    await _safe_edit(query, config.MSG_REG_ERROR_PROGRAM, None)
                     return ConversationHandler.END
             except ValueError:
-                await _safe_edit(query, "Ошибка ID программы.", None)
+                await _safe_edit(query, config.MSG_REG_ERROR_PROGRAM_ID, None)
                 return ConversationHandler.END
 
     item = context.user_data.get("event", context.user_data.get("program", {}))
     item_name = item.get("Название", "мероприятие")
-    text = f"Регистрация: {item_name}\n\nВведите название вашей компании:"
+    text = config.MSG_REG_COMPANY.format(item_name=item_name)
     await _safe_edit(update.callback_query, text, None)
     return COMPANY
 
@@ -97,45 +97,43 @@ async def register_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def register_company(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
     if not text:
-        await update.message.reply_text("Поле не может быть пустым. Введите название компании:")
+        await update.message.reply_text(config.MSG_REG_COMPANY_EMPTY)
         return COMPANY
     if len(text) > 255:
-        await update.message.reply_text("Слишком длинное название (макс. 255 символов). Повторите:")
+        await update.message.reply_text(config.MSG_REG_COMPANY_LONG)
         return COMPANY
     context.user_data["company"] = text
-    await update.message.reply_text("Отлично! Теперь введите вашу должность:")
+    await update.message.reply_text(config.MSG_REG_POSITION)
     return POSITION
 
 
 async def register_position(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
     if not text:
-        await update.message.reply_text("Поле не может быть пустым. Введите должность:")
+        await update.message.reply_text(config.MSG_REG_POSITION_EMPTY)
         return POSITION
     if len(text) > 255:
-        await update.message.reply_text("Слишком длинное поле (макс. 255 символов). Повторите:")
+        await update.message.reply_text(config.MSG_REG_POSITION_LONG)
         return POSITION
     context.user_data["position"] = text
-    await update.message.reply_text("Теперь введите ваш email:")
+    await update.message.reply_text(config.MSG_REG_EMAIL)
     return EMAIL
 
 
 async def register_email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
     if not text:
-        await update.message.reply_text("Введите ваш email:")
+        await update.message.reply_text(config.MSG_REG_EMAIL_EMPTY)
         return EMAIL
     if len(text) > 254 or not _EMAIL_RE.match(text):
-        await update.message.reply_text("Неверный формат email. Попробуйте ещё раз:")
+        await update.message.reply_text(config.MSG_REG_EMAIL_INVALID)
         return EMAIL
     context.user_data["email"] = text
     # Check if event has a code word requirement
     item = context.user_data.get("event", {})
     code_word = item.get("Кодовое слово", "").strip()
     if code_word and code_word != "nan":
-        await update.message.reply_text(
-            f"Введите кодовое слово для подтверждения участия:"
-        )
+        await update.message.reply_text(config.MSG_REG_CODE_WORD)
         return CODE_WORD
     # Save and confirm
     await save_registration(update, context)
@@ -152,15 +150,15 @@ async def register_code_word(update: Update, context: ContextTypes.DEFAULT_TYPE)
     context.user_data["code_attempts"] = attempts
 
     if user_input == expected:
-        await update.message.reply_text("Код подтверждён!", parse_mode="HTML")
+        await update.message.reply_text(config.MSG_REG_CODE_OK, parse_mode="HTML")
         await save_registration(update, context)
     elif attempts >= 3:
         keyboard = [
-            [InlineKeyboardButton("Написать менеджеру", url=f"https://t.me/{MANAGER_USERNAME.lstrip('@')}")],
-            [InlineKeyboardButton("Домой", callback_data="start")],
+            [InlineKeyboardButton(config.BTN_WRITE_MANAGER, url=f"https://t.me/{MANAGER_USERNAME.lstrip('@')}")],
+            [InlineKeyboardButton(config.BTN_HOME, callback_data="start")],
         ]
         await update.message.reply_text(
-            "Неверный код (3 попытки исчерпаны). Обратитесь к менеджеру.",
+            config.MSG_REG_CODE_FAIL_3,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         context.user_data.pop("code_attempts", None)
@@ -168,7 +166,7 @@ async def register_code_word(update: Update, context: ContextTypes.DEFAULT_TYPE)
     else:
         remaining = 3 - attempts
         await update.message.reply_text(
-            f"Неверный код. Осталось попыток: {remaining}",
+            config.MSG_REG_CODE_FAIL_REMAINING.format(remaining=remaining),
         )
     return code_word_retry
 
@@ -225,15 +223,14 @@ async def save_registration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await create_hot_lead(full_user, event_name=item_name)
 
     # Confirmation
-    text = (
-        f"✅ Регистрация завершена!\n\n"
-        f"Мероприятие: <b>{item_name}</b>\n"
-        f"Имя: {first_name} {last_name}\n"
-        f"Email: {user_data.get('email', '')}\n"
-        f"\nМы свяжемся с вами для подтверждения."
+    text = config.MSG_REG_CONFIRM.format(
+        item_name=item_name,
+        first_name=first_name,
+        last_name=last_name,
+        email=user_data.get('email', ''),
     )
     keyboard = [
-        [InlineKeyboardButton("Домой", callback_data="start")],
+        [InlineKeyboardButton(config.BTN_HOME, callback_data="start")],
     ]
     msg = update.message
     try:

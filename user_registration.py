@@ -4,6 +4,7 @@ User registration — request phone contact, save to Sheets/Excel.
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes, MessageHandler, filters
 from user_handler import save_user_to_gsheets, get_user_data
+import config
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,8 @@ async def request_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await start_callback(update, context)
         return
 
-    text = "Мы хотим вас запомнить и будем рады, если вы поделитесь контактом, нажав кнопку ниже."
-    keyboard = [[KeyboardButton("Поделиться контактом", request_contact=True)]]
+    text = config.MSG_CONTACT_PROMPT
+    keyboard = [[KeyboardButton(config.BTN_SHARE_CONTACT, request_contact=True)]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
     query = update.callback_query
@@ -53,7 +54,7 @@ async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Remove reply keyboard
     await update.message.reply_text(
-        f"Спасибо, {first_name}! Мы вас запомнили.",
+        config.MSG_CONTACT_THANKS.format(first_name=first_name),
         reply_markup=ReplyKeyboardMarkup([], resize_keyboard=True),
     )
 

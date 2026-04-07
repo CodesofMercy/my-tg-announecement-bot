@@ -34,7 +34,32 @@ service-account*.json
 admins.json
 faq.txt
 registrations.xlsx
+users.xlsx
 *.log
+
+# Audit / internal docs — NEVER commit
+AUDIT.md
+*audit*.md
+*AUDIT*.md
+UX_AUDIT.md
+*audit*.py
+*AUDIT*.py
+*audit*.txt
+*AUDIT*.txt
+
+# Planning & dev notes (local only, NEVER commit)
+_PLANNING.md
+*PLANNING*.md
+*scratch*.py
+*scratch*.md
+*draft*.py
+*draft*.md
+*EXAMPLE*.py
+*example*.py
+example*.json
+*example*.json
+*temp*.py
+*temp*.md
 
 # Git
 .DS_Store

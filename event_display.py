@@ -19,9 +19,9 @@ async def show_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = []
     if not events:
-        text = "📅 Пока нет предстоящих мероприятий.\nСледите за обновлениями!"
+        text = config.MSG_NO_EVENTS
     else:
-        title = "📅 Афиша мероприятий:"
+        title = config.MSG_EVENTS_TITLE
         lines = [title]
         for i, ev in enumerate(events):
             name = ev.get("Название", f"Event {i+1}")
@@ -38,7 +38,7 @@ async def show_events(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         text = "\n".join(lines)
 
-        keyboard.append([InlineKeyboardButton("Домой", callback_data="start")])
+        keyboard.append([InlineKeyboardButton(config.BTN_HOME, callback_data="start")])
 
     reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
     if query:
@@ -62,13 +62,12 @@ async def show_event_details(update: Update, context: ContextTypes.DEFAULT_TYPE)
     events = await get_event_data()
 
     try:
-        # Extract index from callback like "event_show_3"
         idx = int(query.data.replace("event_show_", ""))
         if not (0 <= idx < len(events)):
-            await query.message.reply_text("Мероприятие не найдено.")
+            await query.message.reply_text(config.MSG_EVENT_NOT_FOUND)
             return
     except (ValueError, IndexError):
-        await query.message.reply_text("Мероприятие не найдено.")
+        await query.message.reply_text(config.MSG_EVENT_NOT_FOUND)
         return
 
     ev = events[idx]
@@ -90,8 +89,8 @@ async def show_event_details(update: Update, context: ContextTypes.DEFAULT_TYPE)
         text += f"\n{desc}\n"
 
     keyboard = [
-        [InlineKeyboardButton("✍️ Зарегистрироваться", callback_data=f"register_{idx}")],
-        [InlineKeyboardButton("Домой", callback_data="start")],
+        [InlineKeyboardButton(config.BTN_REGISTER, callback_data=f"register_{idx}")],
+        [InlineKeyboardButton(config.BTN_HOME, callback_data="start")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 

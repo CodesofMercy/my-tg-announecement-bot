@@ -8,6 +8,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler
 from program_data import get_program_data
 import telegram.error
+import config
 
 
 async def show_programs(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -17,9 +18,9 @@ async def show_programs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = []
     if not programs:
-        text = "📚 Пока нет доступных программ.\nСледите за обновлениями!"
+        text = config.MSG_NO_PROGRAMS
     else:
-        title = "📚 Программы обучения:"
+        title = config.MSG_PROGRAMS_TITLE
         lines = [title]
         for i, prog in enumerate(programs):
             name = prog.get("Название", f"Program {i+1}")
@@ -35,7 +36,7 @@ async def show_programs(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 InlineKeyboardButton(f"🎓 {name}", callback_data=f"program_show_{i}")
             ])
         text = "\n".join(lines)
-        keyboard.append([InlineKeyboardButton("Домой", callback_data="start")])
+        keyboard.append([InlineKeyboardButton(config.BTN_HOME, callback_data="start")])
 
     reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
     if query:
@@ -57,10 +58,10 @@ async def show_program_details(update: Update, context: ContextTypes.DEFAULT_TYP
     try:
         idx = int(query.data.replace("program_show_", ""))
         if not (0 <= idx < len(programs)):
-            await query.message.reply_text("Программа не найдена.")
+            await query.message.reply_text(config.MSG_PROGRAM_NOT_FOUND)
             return
     except (ValueError, IndexError):
-        await query.message.reply_text("Программа не найдена.")
+        await query.message.reply_text(config.MSG_PROGRAM_NOT_FOUND)
         return
 
     prog = programs[idx]
@@ -79,8 +80,8 @@ async def show_program_details(update: Update, context: ContextTypes.DEFAULT_TYP
         text += f"\n{desc}\n"
 
     keyboard = [
-        [InlineKeyboardButton("✍️ Зарегистрироваться", callback_data=f"register_program_{idx}")],
-        [InlineKeyboardButton("Домой", callback_data="start")],
+        [InlineKeyboardButton(config.BTN_REGISTER, callback_data=f"register_program_{idx}")],
+        [InlineKeyboardButton(config.BTN_HOME, callback_data="start")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 

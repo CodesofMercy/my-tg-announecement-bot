@@ -31,15 +31,15 @@ async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     first_name = update.effective_user.first_name or ""
 
     keyboard = [
-        [InlineKeyboardButton("📅 Мероприятия", callback_data="show_events")],
-        [InlineKeyboardButton("📚 Программы", callback_data="show_programs")],
-        [InlineKeyboardButton("👤 Менеджер", callback_data="manager")],
-        [InlineKeyboardButton("❓ FAQ", callback_data="faq")],
+        [InlineKeyboardButton(config.BTN_EVENTS, callback_data="show_events")],
+        [InlineKeyboardButton(config.BTN_PROGRAMS, callback_data="show_programs")],
+        [InlineKeyboardButton(config.BTN_MANAGER, callback_data="manager")],
+        [InlineKeyboardButton(config.BTN_FAQ, callback_data="faq")],
     ]
 
     # Admin button if applicable
     if user_id in config.ADMIN_IDS:
-        keyboard.append([InlineKeyboardButton("⚙️ Админ", callback_data="admin_menu")])
+        keyboard.append([InlineKeyboardButton(config.BTN_ADMIN, callback_data="admin_menu")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     welcome = config.BOT_WELCOME_TEXT

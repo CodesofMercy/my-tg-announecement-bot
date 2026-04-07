@@ -45,11 +45,82 @@ def _env_int(key: str, default: int = 0) -> int:
 BOT_TOKEN = _env("BOT_TOKEN")
 ADMIN_IDS = [int(x) for x in _env_list("ADMIN_IDS")]
 
-# ── Branding / Text ──────────────────────────────────────────────────────────────
+# ── Branding / Text ──────────────────────────────────────────────────────
 BOT_WELCOME_TEXT = _env("BOT_WELCOME_TEXT", "Добро пожаловать! Выберите действие:")
 MANAGER_USERNAME = _env("MANAGER_USERNAME", "ExEdTeam")
+FAQ_FALLBACK_TEXT = _env("FAQ_FALLBACK_TEXT", "FAQ временно в разработке, возвращайтесь чуточку позже.")
 
-# ── Google Sheets ────────────────────────────────────────────────────────────────
+# ── UI: Button Labels ────────────────────────────────────────────────────
+BTN_EVENTS = _env("BTN_EVENTS", "📅 Мероприятия")
+BTN_PROGRAMS = _env("BTN_PROGRAMS", "📚 Программы")
+BTN_MANAGER = _env("BTN_MANAGER", "👤 Менеджер")
+BTN_FAQ = _env("BTN_FAQ", "❓ FAQ")
+BTN_ADMIN = _env("BTN_ADMIN", "⚙️ Админ")
+BTN_HOME = _env("BTN_HOME", "Домой")
+BTN_REGISTER = _env("BTN_REGISTER", "✍️ Зарегистрироваться")
+BTN_BACK = _env("BTN_BACK", "Назад")
+BTN_CANCEL = _env("BTN_CANCEL", "Отмена")
+BTN_WRITE_MANAGER = _env("BTN_WRITE_MANAGER", "Написать менеджеру")
+
+# Admin panel buttons
+BTN_ADMIN_STATS = _env("BTN_ADMIN_STATS", "📊 Статистика")
+BTN_ADMIN_BROADCAST = _env("BTN_ADMIN_BROADCAST", "📢 Рассылка")
+BTN_ADMIN_REMINDERS = _env("BTN_ADMIN_REMINDERS", "⏰ Напоминания")
+BTN_ADMIN_FAQ = _env("BTN_ADMIN_FAQ", "❓ Управление FAQ")
+BTN_ADMIN_FAQ_VIEW = _env("BTN_ADMIN_FAQ_VIEW", "Просмотр")
+BTN_ADMIN_FAQ_EDIT = _env("BTN_ADMIN_FAQ_EDIT", "Редактировать")
+BTN_SEND_CONFIRM = _env("BTN_SEND_CONFIRM", "✅ Отправить")
+
+# ── UI: Messages ──────────────────────────────────────────────────────
+MSG_NO_EVENTS = _env("MSG_NO_EVENTS", "📅 Пока нет предстоящих мероприятий.\nСледите за обновлениями!")
+MSG_EVENTS_TITLE = _env("MSG_EVENTS_TITLE", "📅 Афиша мероприятий:")
+MSG_EVENT_NOT_FOUND = _env("MSG_EVENT_NOT_FOUND", "Мероприятие не найдено.")
+
+MSG_NO_PROGRAMS = _env("MSG_NO_PROGRAMS", "📚 Пока нет доступных программ.\nСледите за обновлениями!")
+MSG_PROGRAMS_TITLE = _env("MSG_PROGRAMS_TITLE", "📚 Программы обучения:")
+MSG_PROGRAM_NOT_FOUND = _env("MSG_PROGRAM_NOT_FOUND", "Программа не найдена.")
+
+MSG_ADMIN_TITLE = _env("MSG_ADMIN_TITLE", "Панель администратора:")
+MSG_ADMIN_NO_ACCESS = _env("MSG_ADMIN_NO_ACCESS", "У вас нет прав администратора.")
+MSG_ADMIN_BACK_TEXT = _env("MSG_ADMIN_BACK_TEXT", "Панель администратора:")
+
+MSG_NO_ADMIN_EVENTS = _env("MSG_NO_ADMIN_EVENTS", "Нет предстоящих мероприятий в ближайшие 30 дней.")
+MSG_ADMIN_REMINDERS_TITLE = _env("MSG_ADMIN_REMINDERS_TITLE", "⏰ Напоминания\nВыберите мероприятие:")
+
+MSG_BROADCAST_PROMPT = _env("MSG_BROADCAST_PROMPT", "📢 Рассылка\n\nВведите текст для рассылки всем пользователям:")
+MSG_BROADCAST_CONFIRM = _env("MSG_BROADCAST_CONFIRM", "Подтвердите рассылку:\n\n{text}")
+MSG_BROADCAST_SENT = _env("MSG_BROADCAST_SENT", "✅ Рассылка отправлена\n\n{text}")
+MSG_BROADCAST_BACK = _env("MSG_BROADCAST_BACK", "Назад")
+
+MSG_FAQ_MANAGE_TITLE = _env("MSG_FAQ_MANAGE_TITLE", "❓ Управление FAQ")
+MSG_FAQ_EDIT_PROMPT = _env("MSG_FAQ_EDIT_PROMPT", "Введите новый текст для FAQ:")
+MSG_FAQ_SAVED = _env("MSG_FAQ_SAVED", "FAQ обновлён!")
+
+MSG_REG_COMPANY = _env("MSG_REG_COMPANY", "Регистрация: {item_name}\n\nВведите название вашей компании:")
+MSG_REG_COMPANY_EMPTY = _env("MSG_REG_COMPANY_EMPTY", "Поле не может быть пустым. Введите название компании:")
+MSG_REG_COMPANY_LONG = _env("MSG_REG_COMPANY_LONG", "Слишком длинное название (макс. 255 символов). Повторите:")
+MSG_REG_POSITION = _env("MSG_REG_POSITION", "Отлично! Теперь введите вашу должность:")
+MSG_REG_POSITION_EMPTY = _env("MSG_REG_POSITION_EMPTY", "Поле не может быть пустым. Введите должность:")
+MSG_REG_POSITION_LONG = _env("MSG_REG_POSITION_LONG", "Слишком длинное поле (макс. 255 символов). Повторите:")
+MSG_REG_EMAIL = _env("MSG_REG_EMAIL", "Теперь введите ваш email:")
+MSG_REG_EMAIL_EMPTY = _env("MSG_REG_EMAIL_EMPTY", "Введите ваш email:")
+MSG_REG_EMAIL_INVALID = _env("MSG_REG_EMAIL_INVALID", "Неверный формат email. Попробуйте ещё раз:")
+MSG_REG_CODE_WORD = _env("MSG_REG_CODE_WORD", "Введите кодовое слово для подтверждения участия:")
+MSG_REG_CODE_OK = _env("MSG_REG_CODE_OK", "Код подтверждён!")
+MSG_REG_CODE_FAIL_3 = _env("MSG_REG_CODE_FAIL_3", "Неверный код (3 попытки исчерпаны). Обратитесь к менеджеру.")
+MSG_REG_CODE_FAIL_REMAINING = _env("MSG_REG_CODE_FAIL_REMAINING", "Неверный код. Осталось попыток: {remaining}")
+MSG_REG_CONFIRM = _env("MSG_REG_CONFIRM", "✅ Регистрация завершена!\n\nМероприятие: <b>{item_name}</b>\nИмя: {first_name} {last_name}\nEmail: {email}\n\nМы свяжемся с вами для подтверждения.")
+MSG_REG_ERROR_EVENT = _env("MSG_REG_ERROR_EVENT", "Ошибка: мероприятие не найдено.")
+MSG_REG_ERROR_EVENT_ID = _env("MSG_REG_ERROR_EVENT_ID", "Ошибка ID мероприятия.")
+MSG_REG_ERROR_PROGRAM = _env("MSG_REG_ERROR_PROGRAM", "Ошибка: программа не найдена.")
+MSG_REG_ERROR_PROGRAM_ID = _env("MSG_REG_ERROR_PROGRAM_ID", "Ошибка ID программы.")
+MSG_MANAGER_CONTACT = _env("MSG_MANAGER_CONTACT", "Связаться с менеджером: @{manager}")
+
+MSG_CONTACT_PROMPT = _env("MSG_CONTACT_PROMPT", "Мы хотим вас запомнить и будем рады, если вы поделитесь контактом, нажав кнопку ниже.")
+BTN_SHARE_CONTACT = _env("BTN_SHARE_CONTACT", "Поделиться контактом")
+MSG_CONTACT_THANKS = _env("MSG_CONTACT_THANKS", "Спасибо, {first_name}! Мы вас запомнили.")
+
+# ── Google Sheets
 GOOGLE_SHEET_ID_USERS = _env("GOOGLE_SHEET_ID_USERS")
 GOOGLE_SHEET_ID_EVENTS = _env("GOOGLE_SHEET_ID_EVENTS")
 GOOGLE_SHEET_ID_PROGRAMS = _env("GOOGLE_SHEET_ID_PROGRAMS")
